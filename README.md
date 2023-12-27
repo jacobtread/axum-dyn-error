@@ -69,7 +69,7 @@ Axum-dyn-error supports `anyhow` errors through the `anyhow` feature flag, by de
 `hide-anyhow` feature flag is enabled which prevents the anyhow error message from being
 included in the error response instead responding with "Server error".
 
-```rust,ignore
+```rust
 
 use axum_dyn_error::{HttpResult, HttpError, StatusCode};
 use axum::{extract::Path, Json};
@@ -88,6 +88,36 @@ pub async fn example_handler(
     let user = get_user_by_id(user_id)
         .await
         .ok_or(anyhow!("Missing user"))?;
+
+    Ok(Json(user))
+}
+```
+
+Using [AnyhowStatusExt] the anyhow error types can have an HTTP status code associated with them, by
+default anyhow errors just use "500 Internal server error":
+
+```rust
+
+use axum_dyn_error::{HttpResult, HttpError, StatusCode, anyhow::AnyhowStatusExt};
+use axum::{extract::Path, Json};
+use anyhow::anyhow;
+
+/// Dummy structure representing a user
+pub struct User;
+
+/// Mock function for finding a user by id
+pub async fn get_user_by_id(user_id: u32) -> Option<User> { unimplemented!() }
+
+/// Example handler
+pub async fn example_handler(
+    Path(user_id): Path<u32>
+) -> HttpResult<Json<User>> {
+    let user = get_user_by_id(user_id)
+        .await
+        .ok_or(
+            anyhow!("Missing user")
+                .status(StatusCode::NOT_FOUND)
+        )?;
 
     Ok(Json(user))
 }
