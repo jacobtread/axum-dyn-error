@@ -1,6 +1,5 @@
-use std::{error::Error, fmt::Display};
-
-use crate::HttpError;
+use crate::{DynHttpError, HttpError, IntoHttpErrorResponse};
+use std::{error::Error, fmt::Display, marker::PhantomData};
 
 /// Wrapper around [anyhow::Error] allowing it to be used as a [HttpError]
 /// without exposing the details.
@@ -23,9 +22,10 @@ impl Display for AnyhowHttpError {
 }
 
 impl HttpError for AnyhowHttpError {
+    #[cfg(feature = "log")]
     fn log(&self) {
         // Anyhow errors contain a stacktrace so only the debug variant is used
-        error!("{:?}", self.0);
+        log::error!("{:?}", self.0);
     }
 
     #[cfg(feature = "hide-anyhow")]
@@ -37,10 +37,14 @@ impl HttpError for AnyhowHttpError {
 
 /// Allow conversion from anyhow errors into [DynHttpError] by wrapping
 /// them with [AnyhowHttpError]
-impl From<anyhow::Error> for DynHttpError {
+impl<I> From<anyhow::Error> for DynHttpError<I>
+where
+    I: IntoHttpErrorResponse,
+{
     fn from(value: anyhow::Error) -> Self {
         DynHttpError {
             inner: Box::new(AnyhowHttpError(value)),
+            _marker: PhantomData,
         }
     }
 }

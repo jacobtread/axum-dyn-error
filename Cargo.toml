@@ -1,11 +1,21 @@
 [package]
 name = "axum-dyn-error"
-version = "0.0.0"
+version = "0.1.0"
 edition = "2021"
 description = "Dynamic error logging for Axum"
 license = "MIT"
 keywords = ["Errors", "Axum", "Logging"]
 authors = ["Jacobtread <jacobtread@gmail.com>"]
+
+[features]
+default = ["log", "anyhow", "hide-anyhow"]
+# Support for anyhow errors
+anyhow = ["dep:anyhow"]
+# Whether anyhow errors should hide the display messages
+hide-anyhow = []
+# Log HTTP errors using `log`
+log = ["dep:log"]
+
 
 [dependencies]
 axum-core = "0.3"
@@ -13,11 +23,7 @@ anyhow = { version = "1", optional = true }
 log = { version = "0.4", optional = true }
 http = "0.2.11"
 
-[features]
-default = ["log"]
-# Support for anyhow errors
-anyhow = ["dep:anyhow"]
-# Whether anyhow errors should hide the display messages
-hide-anyhow = []
-# Log HTTP errors using `log`
-log = ["dep:log"]
+[dev-dependencies]
+axum = "0.6"
+thiserror = "1"
+anyhow = "1"

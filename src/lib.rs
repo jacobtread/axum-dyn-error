@@ -1,18 +1,26 @@
-//! Reserved name
+#![warn(missing_docs)]
+#![doc = include_str!("../README.md")]
 
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
 
 use axum_core::response::{IntoResponse, Response};
-use http::StatusCode;
+
+// Re-export of status code for ease of use
+pub use http::StatusCode;
 
 #[cfg(feature = "anyhow")]
 pub mod anyhow;
 
+#[cfg(feature = "anyhow")]
+pub use anyhow::*;
+
 /// Alias for [Result] that has a [DynHttpError] as the error type
 pub type HttpResult<T, I = TextErrorResponse> = Result<T, DynHttpError<I>>;
 
+/// Structure that stores dynamic error responses, see documentation
+/// home page for usage
 pub struct DynHttpError<I: IntoHttpErrorResponse = TextErrorResponse> {
     /// The dynamically typed http error that created this error
     inner: Box<dyn HttpError>,
@@ -58,8 +66,9 @@ pub trait IntoHttpErrorResponse {
     fn into_response(error: Box<dyn HttpError>) -> Response;
 }
 
-/// Create HTTP error responses where the "reason" is provided as
-/// the text contents of the response
+/// Creates HTTP errors responses where the "reason" is provided as
+/// the text contents of the response and the status is used as the
+/// HTTP status
 pub struct TextErrorResponse;
 
 impl IntoHttpErrorResponse for TextErrorResponse {
@@ -99,5 +108,19 @@ pub trait HttpError: Error + Send + Sync + 'static {
     /// the [Debug] implementation of [DynHttpError]
     fn type_name(&self) -> &str {
         std::any::type_name::<Self>()
+    }
+}
+
+/// Allow conversion from implementors of [HttpError] into a [DynHttpError]
+impl<E, I> From<E> for DynHttpError<I>
+where
+    E: HttpError,
+    I: IntoHttpErrorResponse,
+{
+    fn from(value: E) -> Self {
+        DynHttpError {
+            inner: Box::new(value),
+            _marker: PhantomData,
+        }
     }
 }
