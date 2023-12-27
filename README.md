@@ -1,5 +1,10 @@
 # Axum-dyn-error
 
+![License](https://img.shields.io/github/license/jacobtread/axum-dyn-error?style=for-the-badge)
+![Cargo Version](https://img.shields.io/crates/v/axum-dyn-error?style=for-the-badge)
+![Cargo Downloads](https://img.shields.io/crates/d/axum-dyn-error?style=for-the-badge)
+
+
 Dynamic error handling for Axum HTTP handlers
 
 ```toml
