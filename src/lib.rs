@@ -16,6 +16,53 @@ pub mod anyhow;
 #[cfg(feature = "anyhow")]
 pub use anyhow::*;
 
+/// Wrapper around an error type that displays a generic
+/// error message and server status
+pub struct GenericServerError {
+    inner: Box<(dyn Error + Send + Sync + 'static)>,
+}
+
+/// Extension trait for the [Error] trait for extra functionality
+pub trait ErrorExt {
+    /// Converts this error into a generic error
+    fn into_generic(self) -> GenericServerError;
+}
+
+impl<E> ErrorExt for E
+where
+    E: Error + Send + Sync + 'static,
+{
+    fn into_generic(self) -> GenericServerError {
+        GenericServerError {
+            inner: Box::new(self),
+        }
+    }
+}
+
+impl Debug for GenericServerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(&self.inner, f)
+    }
+}
+
+impl Display for GenericServerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.inner, f)
+    }
+}
+
+impl Error for GenericServerError {}
+
+impl HttpError for GenericServerError {
+    fn status(&self) -> StatusCode {
+        StatusCode::INTERNAL_SERVER_ERROR
+    }
+
+    fn reason(&self) -> String {
+        "Server error".to_string()
+    }
+}
+
 /// Alias for [Result] that has a [DynHttpError] as the error type
 pub type HttpResult<T, I = TextErrorResponse> = Result<T, DynHttpError<I>>;
 
